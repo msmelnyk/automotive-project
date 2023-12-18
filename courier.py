@@ -1,126 +1,107 @@
-# add mongo driver
-import config as cf
-import json
+import datetime
 import uuid
+import config as cf
+
 from pymongo import MongoClient
 
 
-# db = client.test
-# test = db.test
-
-
 def get_mongo_connection():
-    client = MongoClient(cf.db_creds['mongo_cluster'])
-    prod = client.prod
     try:
-        print(prod.command('find()'))
-
+        db = MongoClient(cf.db_creds['mongo_cluster'])
+        history = db.prod.history
+        # print(history.count())
+        db.prod.command('serverStatus')
     except Exception as e:
-        print(e)
+        output_log = str(
+            dict(id=str(uuid.uuid4()),
+                 component_name='get_mongo_connection',
+                 data=None,
+                 error=1,
+                 error_type='fatal error',
+                 error_details=str(e),
+                 created_at=str(datetime.datetime.now())
+                 )
+        )
+        with open('logs.txt', 'a', encoding="utf-8") as file:
+            file.write(output_log + ',\n')
+        print(output_log)
     else:
         # log
         print('---Connect to DB: successful')
-
-    return prod
-
-
-def get_last_load_date_time(prod = get_mongo_connection()):
-    return prod.history_0.find().sort({"ts":1}).limit(1)
+    return history
 
 
-def web_courier():
-    mongo_cluster_history = get_mongo_connection()
-    to_load = list()
-
-    with open('data_for_test.json') as file:
-        data = file.read()
-
-    if len(data)
-    # print('read rows: ' + str(len(data)))
-
-    if isinstance(data, list) and data:
-        for i in data:
-            if i['cat'] > :
-                to_load.append(i)
-
-
-
-        print(
-            test.insert_one({'_id': str(uuid.uuid4()),
-                             'array': file_data,
-                             'created_at': str(datetime.datetime.now())
-                             }
-                            )
-        )
-        print(str(datetime.datetime.now()))
-        print(i)
-
-    # print(len(file_data))
-
-    # Inserting the loaded data in the Collection
-    # if JSON contains data more than one entry
-    # insert_many is used else insert_one is used
-    for i in range(1, 20, 1):
-        if isinstance(file_data, list):
-            print(
-                test.insert_one({'_id': str(uuid.uuid4()),
-                                 'array': file_data,
-                                 'created_at': str(datetime.datetime.now())
-                                 }
-                                )
-            )
-            print(str(datetime.datetime.now()))
-            print(i)
-
-    pass
-
-
-def local_courier(data):
+def courier(data):
     try:
-        if type(data) == dict:
-            with open('local_storage.txt', 'a') as file:
-                file.write(
-                    str(
-                        dict(id=uuid.uuid4(),
-                             component_name='local_courier',
-                             data=data,
-                             error=0,
-                             error_type='',
-                             error_details=''
-                             )
-                    ) + '\n'
-                )
-        else:
-            with open('logs.txt', 'a') as file:
-                file.write(
-                    str(
-                        dict(id=uuid.uuid4(),
-                             component_name='local_courier',
-                             data=data,
-                             error=1,
-                             error_type='non dict value',
-                             error_details=''
-                             )
-                    ) + '\n'
-                )
+        if type(data) is dict:
+            output = dict(
+                id=str(uuid.uuid4()),
+                component_name='courier',
+                data=data,
+                created_at=str(datetime.datetime.now())
+            )
 
-    except Exception as e:
-        with open('logs.txt', 'a') as file:
-            file.write(
+            with open('local_storage.txt', 'a', encoding="utf-8") as file:
+                file.write(str(output) + ',\n')
+
+            mongo_cluster_history = get_mongo_connection()
+
+            # print(
+            mongo_cluster_history.insert_one({
+                '_id': str(uuid.uuid4()),
+                'data': output
+            })
+            # )
+            # print(str(datetime.datetime.now()))
+            # print(data)
+
+            with open('logs.txt', 'a', encoding="utf-8") as file:
+                file.write(
+                    str(
+                        dict(id=str(uuid.uuid4()),
+                             component_name='local_courier',
+                             data=output,
+                             error=0,
+                             error_type=None,
+                             error_details='successful write new record to storages',
+                             created_at=str(datetime.datetime.now())
+                             )
+                    ) + ',\n'
+                )
+            print('successful write new record to storages')
+
+        else:
+            output_log = (
                 str(
-                    dict(id=uuid.uuid4(),
+                    dict(id=str(uuid.uuid4()),
                          component_name='local_courier',
                          data=data,
                          error=1,
-                         error_type='fatal error',
-                         error_details=str(e)
+                         error_type='error on input from watcher',
+                         error_details='exist not dict value',
+                         created_at=str(datetime.datetime.now())
                          )
-                ) + '\n'
+                )
             )
+            with open('logs.txt', 'a', encoding="utf-8") as file:
+                file.write(output_log + ',\n')
+            print(output_log)
 
-            # with open('data.json') as file:
-            #     file.write(json.dumps(dictionary, indent=1))
-            #     file_data = json.load(file)
+    except Exception as e:
+        output_log = (
+            str(
+                dict(id=str(uuid.uuid4()),
+                     component_name='courier',
+                     messege='except error in courier',
+                     data=data,
+                     error=1,
+                     error_type='exception',
+                     error_details=str(e),
+                     created_at=str(datetime.datetime.now())
+                     )
+            )
+        )
 
-# def users(db):
-#     pass
+        with open('logs.txt', 'a', encoding="utf-8") as file:
+            file.write(output_log + ',\n')
+        print(output_log)
