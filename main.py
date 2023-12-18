@@ -6,6 +6,7 @@ from multiprocessing import Process
 import pygetwindow as gw
 from courier import courier
 
+
 last_active_window = ''
 
 
@@ -91,12 +92,6 @@ def watcher():
         with open('logs.txt', 'a', encoding="utf-8") as file:
             file.writelines(output_log + ',\n')
         print(output_log)
-
-
-# def job():
-#     print(str(datetime.now()) + " Schedule start..")
-#     logging_service(str(datetime.now()) + " Start schedule", "SCHEDULE", 200)
-
 
 def wait():
     # schedule.every().day.at("09:30").do(job)
