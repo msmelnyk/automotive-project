@@ -105,4 +105,3 @@ def courier(data):
         with open('logs.txt', 'a', encoding="utf-8") as file:
             file.write(output_log + ',\n')
         print(output_log)
-
